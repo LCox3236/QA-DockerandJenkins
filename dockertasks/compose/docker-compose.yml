@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flask-app
+    ports:
+      - "5000:5000"  # Optional: if you want direct access without Nginx
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    depends_on:
+      - mysql
+    networks:
+      - backend
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=flask-db
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./CreateTable.sql:/docker-entrypoint-initdb.d/CreateTable.sql:ro
+    ports:
+      - "3306:3306"
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-reverse-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - backend
+
+volumes:
+  mysql-data:
+
+networks:
+  backend:
