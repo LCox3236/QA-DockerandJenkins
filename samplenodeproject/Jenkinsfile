@@ -3,6 +3,11 @@ pipeline {
     stages {
         stage('Build'){
         steps{
+            sh "pwd"
+            dir('your-sub-directory') {
+            sh "pwd"
+            }
+            sh "pwd"
             sh 'docker build -t nodeapp .'
         }
       }
