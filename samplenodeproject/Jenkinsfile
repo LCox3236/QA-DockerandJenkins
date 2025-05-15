@@ -1,15 +1,45 @@
 pipeline {
     agent any
+
     stages {
-        stage('Checkout'){
-        steps{
-            git url: 'https://github.com/LCox3236/QA-DockerandJenkins/samplenodeproject', branch: 'main'
+        stage('Initialize') {
+            steps {
+                echo 'Starting pipeline'
             }
         }
-        stage('Build'){
-        steps{
-            sh 'docker build -t nodeapp .'
+
+        stage('Run Stages in Subdirectory') {
+            steps {
+                script {
+                    // Define the helper function
+                    def runInMyDir = { stageName, body ->
+                        stage(stageName) {
+                            dir('samplenodeproject') {
+                                body()
+                            }
+                        }
+                    }
+
+                    // Use the helper to define multiple stages inside 'my/dir'
+                    runInMyDir('Build') {
+                        sh 'docker build -t nodeapp .'
+                        // sh 'make build' or your real build command
+                    }
+
+                    runInMyDir('Test') {
+                        sh 'echo Running tests'
+                        // sh 'make test' or your real test command
+                    }
+
+                    runInMyDir('Deploy') {
+                        sh 'echo Deploying app'
+                        // sh './deploy.sh' or similar
+                    }
+                }
+            }
         }
-      }
     }
+
+
+
 }
