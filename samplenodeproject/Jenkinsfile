@@ -1,12 +1,12 @@
 pipeline {
     agent any
-    dir('samplenodeproject'){
     stages {
-        stage('Build'){
-        steps {
-            sh 'docker build -t nodeapp .'
+        dir('samplenodeproject'){
+            stage('Build'){
+            steps {
+                sh 'docker build -t nodeapp .'
+                }
             }
         }
-      }
     }
 }
