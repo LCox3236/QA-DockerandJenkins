@@ -1,15 +1,10 @@
 pipeline {
-  agent any
-  stages {
-    stage('Pipeline Stages'){
-    steps {
-      sh "ls"
+    agent any
+    stages {
+        stage('Build'){
+        steps{
+            sh 'cd samplenodeproject && sudo docker build .'
+        }
       }
     }
-    stage('second stage'){
-    steps {
-      sh 'pwd'
-      }
-    }
-  }
 }
