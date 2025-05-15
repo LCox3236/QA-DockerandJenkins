@@ -9,5 +9,7 @@ pipeline {
     stage('second stage'){
     steps {
       sh 'pwd'
-   }
- }
+      }
+    }
+  }
+}
