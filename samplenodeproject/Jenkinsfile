@@ -1,14 +1,11 @@
 pipeline {
     agent any
+    dir('samplenodeproject'){
     stages {
         stage('Build'){
-        steps{
-            sh "pwd"
-            dir('your-sub-directory') {
-                sh "pwd"
-            }
-            sh "pwd"
+        steps {
             sh 'docker build -t nodeapp .'
+            }
         }
       }
     }
