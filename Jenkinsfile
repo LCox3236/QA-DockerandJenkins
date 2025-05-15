@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Build'){
         steps{
-            sh 'cd samplenodeproject && sudo docker build .'
+            sh 'cd samplenodeproject && docker build -t nodeapp .'
         }
       }
     }
