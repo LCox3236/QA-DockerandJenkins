@@ -27,13 +27,13 @@ pipeline {
                     }
 
                     runInMyDir('Test') {
-                        sh 'echo Running tests'
-                        // sh 'make test' or your real test command
+                        echo 'testing...'
+                        sh 'sudo docker inspect --type=image nodeapp:latest '
+
                     }
 
                     runInMyDir('Deploy') {
-                        sh 'echo Deploying app'
-                        // sh './deploy.sh' or similar
+                        sh 'sudo docker run -d --name nodeappcontainer -p 80:80  nodeapp:latest'
                     }
                 }
             }
