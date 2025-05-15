@@ -28,12 +28,12 @@ pipeline {
 
                     runInMyDir('Test') {
                         echo 'testing...'
-                        sh 'sudo docker inspect --type=image nodeapp:latest '
+                        sh 'docker inspect --type=image nodeapp:latest '
 
                     }
 
                     runInMyDir('Deploy') {
-                        sh 'sudo docker run -d --name nodeappcontainer -p 80:80  nodeapp:latest'
+                        sh 'docker run -d --name nodeappcontainer -p 80:80  nodeapp:latest'
                     }
                 }
             }
