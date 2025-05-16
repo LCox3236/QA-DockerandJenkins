@@ -33,7 +33,7 @@ pipeline {
                     }
 
                     runInMyDir('Deploy') {
-                        sh 'docker run -d --name nodeappcontainer -p 80:80  nodeapp:latest'
+                        sh 'docker run -d --name nodeappcontainer -p 5000:5000  nodeapp:latest'
                     }
                 }
             }
