@@ -21,7 +21,7 @@ pipeline {
                     }
 
                     runInMyDir('Cleanup') {
-                        sh 'chmod +x cleanup/sh && ./cleanup.sh'
+                        sh 'chmod +x cleanup.sh && ./cleanup.sh'
                         // sh 'make build' or your real build command
                     }
 
