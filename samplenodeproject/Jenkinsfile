@@ -20,11 +20,7 @@ pipeline {
                         }
                     }
 
-                    runInMyDir('Cleanup') {
-                        sh 'chmod +x cleanup.sh && ./cleanup.sh'
-                        // sh 'make build' or your real build command
-                    }
-
+                    // Use the helper to define multiple stages inside 'my/dir'
                     runInMyDir('Build') {
                         sh 'docker build -t nodeapp .'
                         // sh 'make build' or your real build command
