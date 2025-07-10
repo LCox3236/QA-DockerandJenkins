@@ -32,7 +32,7 @@ pipeline {
                     }
 
                     runInMyDir('Build Docker Image') {
-                        sh 'eval $(minikube docker-env) && docker build -t express-app .'
+                        sh 'eval $(minikube docker-env) && docker build -t nodeapp .'
                     }
 
                     runInMyDir('Test') {
