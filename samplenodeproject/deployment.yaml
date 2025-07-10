@@ -13,8 +13,8 @@ spec:
         app: node
     spec:
       containers:
-      - name: node
-        image: nodeapp
+      - name: nodeapp
+        image: nodeapp:latest
         ports:
         - containerPort: 5000
 ---
