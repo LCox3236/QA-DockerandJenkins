@@ -24,8 +24,11 @@ pipeline {
 
                     // Use the helper to define multiple stages inside 'my/dir'
                     runInMyDir('Set Docker Env for Minikube') {
-                        env.DOCKER_ENV = sh(script: 'minikube docker-env --shell bash', returnStdout: true).trim()
-                        sh "${env.DOCKER_ENV}"
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            docker info
+                        '''
                     }
 
                     runInMyDir('Build Docker Image') {
