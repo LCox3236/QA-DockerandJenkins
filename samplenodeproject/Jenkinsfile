@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-    MINIKUBE_HOME = '/var/lib/jenkins'
-    KUBECONFIG = '/var/lib/jenkins/.kube/config'
+        MINIKUBE_HOME = '/var/lib/jenkins'
     }
     stages {
         stage('Initialize') {
@@ -14,7 +13,7 @@ pipeline {
         stage('Run Stages in Subdirectory') {
             steps {
                 script {
-                    // Define the helper function
+                    // Helper for running stages in samplenodeproject/
                     def runInMyDir = { stageName, body ->
                         stage(stageName) {
                             dir('samplenodeproject') {
@@ -48,22 +47,41 @@ pipeline {
                         '''
                     }
 
-                    runInMyDir('Deploy') {
+                    runInMyDir('Deploy to Minikube') {
                         sh '''
                             export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
                             kubectl apply -f deployment.yaml
+                            kubectl apply -f service.yaml
+                            if [ -f ingress.yaml ]; then
+                                kubectl apply -f ingress.yaml
+                            fi
                         '''
                     }
 
-                    // Optional: To run without Kubernetes, use Docker run
-                    // runInMyDir('Deploy (Local Docker Run)') {
-                    //     sh '''
-                    //         export MINIKUBE_HOME=/var/lib/jenkins
-                    //         eval $(minikube docker-env)
-                    //         docker run -d --name nodeappcontainer -p 5000:5000 nodeapp:latest
-                    //     '''
-                    // }
+                    runInMyDir('Verify Deployment') {
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            echo "Waiting for pod to be ready..."
+                            kubectl rollout status deployment/nodeapp-deployment --timeout=60s
+                            kubectl get pods
+                            kubectl get svc
+                        '''
+                    }
+
+                    runInMyDir('Teardown Previous Deployments (Optional)') {
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            echo "Cleaning up old resources..."
+                            kubectl delete deployment nodeapp-deployment --ignore-not-found
+                            kubectl delete service nodeapp-service --ignore-not-found
+                            if [ -f ingress.yaml ]; then
+                                kubectl delete -f ingress.yaml --ignore-not-found
+                            fi
+                        '''
+                    }
                 }
             }
         }
