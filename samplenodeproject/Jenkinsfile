@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-            MINIKUBE_HOME = '/var/lib/jenkins'
-        }
+        MINIKUBE_HOME = '/var/lib/jenkins'
+    }
     stages {
         stage('Initialize') {
             steps {
@@ -22,7 +22,6 @@ pipeline {
                         }
                     }
 
-                    // Use the helper to define multiple stages inside 'my/dir'
                     runInMyDir('Set Docker Env for Minikube') {
                         sh '''
                             export MINIKUBE_HOME=/var/lib/jenkins
@@ -32,27 +31,40 @@ pipeline {
                     }
 
                     runInMyDir('Build Docker Image') {
-                        sh 'eval $(minikube docker-env) && docker build -t nodeapp .'
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            docker build -t nodeapp .
+                        '''
                     }
 
                     runInMyDir('Test') {
-                        echo 'testing...'
-                        sh 'docker inspect --type=image nodeapp:latest '
-
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            echo "testing..."
+                            docker inspect --type=image nodeapp:latest
+                        '''
                     }
 
                     runInMyDir('Deploy') {
-                        sh 'kubectl apply -f deployment.yaml'
+                        sh '''
+                            export MINIKUBE_HOME=/var/lib/jenkins
+                            eval $(minikube docker-env)
+                            kubectl apply -f deployment.yaml
+                        '''
                     }
 
-                    // runInMyDir('Deploy') {
-                    //     sh 'docker run -d --name nodeappcontainer -p 5000:5000  nodeapp:latest'
+                    // Optional: To run without Kubernetes, use Docker run
+                    // runInMyDir('Deploy (Local Docker Run)') {
+                    //     sh '''
+                    //         export MINIKUBE_HOME=/var/lib/jenkins
+                    //         eval $(minikube docker-env)
+                    //         docker run -d --name nodeappcontainer -p 5000:5000 nodeapp:latest
+                    //     '''
                     // }
                 }
             }
         }
     }
-
-
-
 }
