@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    environment {
+            MINIKUBE_HOME = '/var/lib/jenkins'
+        }
     stages {
         stage('Initialize') {
             steps {
