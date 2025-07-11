@@ -13,7 +13,6 @@ pipeline {
         stage('Run Stages in Subdirectory') {
             steps {
                 script {
-                    // Helper for running stages in samplenodeproject/
                     def runInMyDir = { stageName, body ->
                         stage(stageName) {
                             dir('samplenodeproject') {
@@ -22,9 +21,20 @@ pipeline {
                         }
                     }
 
+                    runInMyDir('Teardown Previous Deployments') {
+                        sh '''
+                            eval $(minikube docker-env)
+                            echo "Cleaning up old resources..."
+                            kubectl delete deployment nodeapp-deployment --ignore-not-found
+                            kubectl delete service nodeapp-service --ignore-not-found
+                            if [ -f ingress.yaml ]; then
+                                kubectl delete -f ingress.yaml --ignore-not-found
+                            fi
+                        '''
+                    }
+
                     runInMyDir('Set Docker Env for Minikube') {
                         sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
                             docker info
                         '''
@@ -32,24 +42,21 @@ pipeline {
 
                     runInMyDir('Build Docker Image') {
                         sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
-                            docker build -t nodeapp .
+                            docker build -t nodeapp:latest .
                         '''
                     }
 
-                    runInMyDir('Test') {
+                    runInMyDir('Test Docker Image') {
                         sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
-                            echo "testing..."
-                            docker inspect --type=image nodeapp:latest
+                            echo "Testing Docker image..."
+                            docker inspect nodeapp:latest
                         '''
                     }
 
                     runInMyDir('Deploy to Minikube') {
                         sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
                             kubectl apply -f deployment.yaml
                             kubectl apply -f service.yaml
@@ -61,25 +68,11 @@ pipeline {
 
                     runInMyDir('Verify Deployment') {
                         sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
                             eval $(minikube docker-env)
                             echo "Waiting for pod to be ready..."
-                            kubectl rollout status deployment/nodeapp-deployment --timeout=60s
+                            kubectl rollout status deployment/nodeapp-deployment --timeout=180s
                             kubectl get pods
                             kubectl get svc
-                        '''
-                    }
-
-                    runInMyDir('Teardown Previous Deployments (Optional)') {
-                        sh '''
-                            export MINIKUBE_HOME=/var/lib/jenkins
-                            eval $(minikube docker-env)
-                            echo "Cleaning up old resources..."
-                            kubectl delete deployment nodeapp-deployment --ignore-not-found
-                            kubectl delete service nodeapp-service --ignore-not-found
-                            if [ -f ingress.yaml ]; then
-                                kubectl delete -f ingress.yaml --ignore-not-found
-                            fi
                         '''
                     }
                 }

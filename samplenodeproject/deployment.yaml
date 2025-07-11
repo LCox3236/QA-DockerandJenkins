@@ -15,10 +15,12 @@ spec:
       containers:
         - name: nodeapp
           image: nodeapp:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
 
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -26,7 +28,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: node
+    app: nodeapp           # <-- fixed to match deployment label
   ports:
     - port: 80
       targetPort: 5000
