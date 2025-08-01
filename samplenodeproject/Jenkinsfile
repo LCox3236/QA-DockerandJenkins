@@ -67,8 +67,8 @@ pipeline {
                     runInMyDir('Start Port Forwarding') {
                         sh '''
                             eval $(minikube docker-env)
-                            kubectl port-forward service/nodeapp-service 8080:5000 &
-                            echo "Port forwarding started on localhost:8080. Press Ctrl+C to stop it."
+                            kubectl port-forward service/nodeapp-service 8081:5000 &
+                            echo "Port forwarding started on localhost:8081. Press Ctrl+C to stop it."
                         '''
                     }
 
