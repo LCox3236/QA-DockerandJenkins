@@ -54,10 +54,12 @@ pipeline {
 
         stage('Deploy App') {
             steps {
-                sh '''
-                scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@51.142.192.35:/var/www/calculator
-                ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@51.142.192.35 "sudo systemctl restart nginx"
-                '''       
+                sshagent(credentials: ['azuressh']) {
+                    sh '''
+                    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@51.142.192.35:/var/www/calculator
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@51.142.192.35 "sudo systemctl restart nginx"
+                    '''
+                }
             }
         }
 
