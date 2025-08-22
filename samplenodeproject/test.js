@@ -1,5 +1,5 @@
 ﻿const assert = require('assert')
-const main = require('./index')
+const main = require('./calculator')
 it('AdditionGivesCorrectValue', () => {
     assert.equal(main.add(2, 2), 4)
 })
