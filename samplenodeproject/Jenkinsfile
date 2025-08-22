@@ -54,7 +54,7 @@ pipeline {
 
         stage('Deploy App') {
             steps {
-                sshagent(credentials: ['azureuser-ssh-key']) {
+                sshagent(credentials: ['azuressh']) {
                 sh '''
                 echo "Deploying calculator app to App VM..."
                 ls
