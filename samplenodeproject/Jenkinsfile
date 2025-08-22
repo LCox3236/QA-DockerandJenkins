@@ -1,11 +1,74 @@
-stage('Deploy App') {
-    steps {
-        sh 'scp -r ./dist azureuser@51.142.192.35:/var/www/calculator'
-        sh 'ssh azureuser@51.142.192.35 "sudo systemctl restart nginx"'
+pipeline {
+    agent any
+
+    environment {
+        APP_VM = "azureuser@51.142.192.35"
     }
-}
-stage('Verify') {
-    steps {
-        sh 'curl -f http://51.142.192.35:80 || exit 1'
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/LCox3236/QA-DockerandJenkins'
+            }
+        }
+
+        stage('Install & Test') {
+            steps {
+                sh '''
+                echo "Installing dependencies and running tests..."
+                npm install
+                npm test
+                '''
+            }
+        }
+
+        stage('Terraform Init & Plan') {
+            steps {
+                sh '''
+                echo "Initializing Terraform..."
+                terraform init
+                terraform plan -out=tfplan
+                '''
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                input "Apply Terraform changes?" // Manual approval (optional)
+                sh '''
+                echo "Applying Terraform changes..."
+                terraform apply -auto-approve tfplan
+                '''
+            }
+        }
+
+        stage('Deploy App') {
+            steps {
+                sh '''
+                echo "Deploying calculator app to App VM..."
+                scp -r ./dist ${APP_VM}:/var/www/calculator
+                ssh ${APP_VM} "sudo systemctl restart nginx"
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                echo "Verifying deployment..."
+                curl -f http://${APP_VM_IP}:80 || exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment successful!'
+        }
+        failure {
+            echo '❌ Deployment failed!'
+        }
     }
 }
