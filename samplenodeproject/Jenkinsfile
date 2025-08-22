@@ -16,6 +16,7 @@ pipeline {
         stage('Install & Test') {
             steps {
                 sh '''
+                cd samplenodeproject
                 echo "Installing dependencies and running tests..."
                 npm install
                 npm test
@@ -25,6 +26,7 @@ pipeline {
 
         stage('Terraform Init & Plan') {
             steps {
+                input "Plan Terraform changes?" // Manual approval (optional)
                 sh '''
                 echo "Initializing Terraform..."
                 terraform init
@@ -47,6 +49,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Deploying calculator app to App VM..."
+                cd samplenodeproject
                 scp -r ./dist ${APP_VM}:/var/www/calculator
                 ssh ${APP_VM} "sudo systemctl restart nginx"
                 '''
@@ -57,7 +60,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Verifying deployment..."
-                curl -f http://${APP_VM_IP}:80 || exit 1
+                curl -f http://${APP_VM}:80 || exit 1
                 '''
             }
         }
