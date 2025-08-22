@@ -57,7 +57,7 @@ pipeline {
                 sh '''
                 echo "Deploying calculator app to App VM..."
                 cd samplenodeproject
-                scp -r ./dist ${APP_VM}:/var/www/calculator
+                scp -r ./samplenodeproject ${APP_VM}:/var/www/calculator
                 ssh ${APP_VM} "sudo systemctl restart nginx"
                 '''
             }
