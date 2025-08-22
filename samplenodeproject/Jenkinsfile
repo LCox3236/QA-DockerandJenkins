@@ -54,14 +54,23 @@ pipeline {
 
         stage('Deploy App') {
             steps {
-                sshagent(credentials: ['azuressh']) {
+                sshagent(credentials: ['azureuser-ssh-key']) {
                     sh '''
                     echo "Deploying calculator app to App VM..."
-                    cd samplenodeproject
-                    scp -r ./samplenodeproject azureuser@51.142.192.35:/var/www/calculator
-                    ssh azureuser@51.142.192.35 "sudo systemctl restart nginx"
+                    ls
+                    scp -r ./samplenodeproject ${APP_VM}:/var/www/calculator
+                    ssh ${APP_VM} "sudo systemctl restart nginx"
                     '''
                 }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                echo "Verifying deployment..."
+                curl -f http://${APP_VM}:80 || exit 1
+                '''
             }
         }
 
