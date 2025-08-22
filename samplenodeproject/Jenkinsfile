@@ -54,15 +54,10 @@ pipeline {
 
         stage('Deploy App') {
             steps {
-                sshagent(credentials: ['azuressh']) {
-                    sh '''
-                    echo "Deploying calculator app to App VM..."
-                    ls
-                    ssh-keyscan -H 51.142.192.35 >> ~/.ssh/known_hosts
-                    scp -r ./samplenodeproject ${APP_VM}:/var/www/calculator
-                    ssh ${APP_VM} "sudo systemctl restart nginx"
-                    '''
-                }
+                sh '''
+                scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@51.142.192.35:/var/www/calculator
+                ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@51.142.192.35 "sudo systemctl restart nginx"
+                '''       
             }
         }
 
