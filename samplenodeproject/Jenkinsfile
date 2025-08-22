@@ -24,30 +24,32 @@ pipeline {
             }
         }
 
-        stage('Terraform Init & Plan') {
-            steps {
-                input "Plan Terraform changes?" // Manual approval (optional)
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh '''
-                    echo "Initializing Terraform..."
-                    terraform init
-                    terraform plan -out=tfplan
-                    '''
-                }
-            }
-        }
+        // stage('Terraform Init & Plan') {
+        //     steps {
+        //         input "Plan Terraform changes?" // Manual approval (optional)
+        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //             sh '''
+        //             echo "Initializing Terraform..."
+        //             cd terraform
+        //             terraform init
+        //             terraform plan -out=tfplan
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage('Terraform Apply') {
-            steps {
-                input "Apply Terraform changes?" // Manual approval (optional)
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh '''
-                    echo "Applying Terraform changes..."
-                    terraform apply -auto-approve tfplan
-                    '''
-                }
-            }
-        }
+        // stage('Terraform Apply') {
+        //     steps {
+        //         input "Apply Terraform changes?" // Manual approval (optional)
+        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //             sh '''
+        //             echo "Applying Terraform changes..."
+        //             cd terraform
+        //             terraform apply -auto-approve tfplan
+        //             '''
+        //         }
+        //     }
+        // }
 
 
         stage('Deploy App') {
