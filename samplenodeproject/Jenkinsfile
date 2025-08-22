@@ -1,88 +1,11 @@
-pipeline {
-    agent any
-    environment {
-        MINIKUBE_HOME = '/var/lib/jenkins'
+stage('Deploy App') {
+    steps {
+        sh 'scp -r ./dist azureuser@51.142.192.35:/var/www/calculator'
+        sh 'ssh azureuser@51.142.192.35 "sudo systemctl restart nginx"'
     }
-    stages {
-        stage('Initialize') {
-            steps {
-                echo 'Starting pipeline'
-            }
-        }
-
-        stage('Run Stages in Subdirectory') {
-            steps {
-                script {
-                    def runInMyDir = { stageName, body ->
-                        stage(stageName) {
-                            dir('samplenodeproject') {
-                                body()
-                            }
-                        }
-                    }
-
-                    runInMyDir('Teardown Previous Deployments') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "Cleaning up old resources..."
-                            kubectl delete deployment nodeapp-deployment --ignore-not-found
-                            kubectl delete service nodeapp-service --ignore-not-found
-                            if [ -f ingress.yaml ]; then
-                                kubectl delete -f ingress.yaml --ignore-not-found
-                            fi
-                        '''
-                    }
-
-                    runInMyDir('Set Docker Env for Minikube') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            docker info
-                        '''
-                    }
-
-                    runInMyDir('Build Docker Image') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            docker build -t nodeapp:latest .
-                        '''
-                    }
-
-                    runInMyDir('Test Docker Image') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "Testing Docker image..."
-                            docker inspect nodeapp:latest
-                        '''
-                    }
-
-                    runInMyDir('Deploy to Minikube') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            kubectl apply -f deployment.yaml
-                            kubectl apply -f service.yaml
-                            kubectl apply -f ingress.yaml
-
-                        '''
-                    }
-                    runInMyDir('Start Port Forwarding') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            kubectl port-forward service/nodeapp-service 8081:5000 &
-                            echo "Port forwarding started on localhost:8081. Press Ctrl+C to stop it."
-                        '''
-                    }
-
-                    runInMyDir('Verify Deployment') {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "Waiting for pod to be ready..."
-                            kubectl rollout status deployment/nodeapp-deployment --timeout=180s
-                            kubectl get pods
-                            kubectl get svc
-                        '''
-                    }
-                }
-            }
-        }
+}
+stage('Verify') {
+    steps {
+        sh 'curl -f http://51.142.192.35:80 || exit 1'
     }
 }
