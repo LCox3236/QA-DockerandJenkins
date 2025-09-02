@@ -85,7 +85,7 @@ pipeline {
         stage('Deploy App') {
             steps {
                 sshagent(credentials: ['azuressh']) {
-                    sh '''
+                    sh """
                     echo "Deploy stage Public IP: ${env.PUBLIC_IP}"
                     # Ensure the target directory exists on the remote server
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
@@ -106,7 +106,7 @@ pipeline {
                     
                     # Restart nginx to apply changes
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo systemctl restart nginx"
-                    '''
+                    """
                 }
             }
         }
