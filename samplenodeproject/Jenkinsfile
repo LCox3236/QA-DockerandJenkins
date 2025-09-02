@@ -31,7 +31,7 @@ pipeline {
                     sh '''
                     echo "Initializing Terraform..."
                     pwd
-                    cd terraform
+                    cd samplenodeproject/terraform
                     terraform init
                     terraform plan -out=tfplan
                     '''
