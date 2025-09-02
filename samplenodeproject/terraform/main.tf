@@ -118,20 +118,12 @@ resource "azurerm_public_ip" "public_ip" {
   allocation_method          = "Static"  # Static IP
   sku                         = "Standard"  # Standard SKU for public IP
   idle_timeout_in_minutes    = 4           # Optional: set idle timeout (default is 4)
-
-  # Ensure this IP does not change between destroy and apply
-  lifecycle {
-    prevent_destroy = true  # Prevent the public IP from being destroyed
-  }
 }
 
 # Lifecycle configuration to prevent destruction of critical resources
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
-  lifecycle {
-    prevent_destroy = true  # Prevent NIC from being destroyed
-  }
 }
 
 # Virtual Machine

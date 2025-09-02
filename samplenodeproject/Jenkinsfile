@@ -24,32 +24,41 @@ pipeline {
             }
         }
 
-        // stage('Terraform Init & Plan') {
-        //     steps {
-        //         input "Plan Terraform changes?" // Manual approval (optional)
-        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //             sh '''
-        //             echo "Initializing Terraform..."
-        //             cd terraform
-        //             terraform init
-        //             terraform plan -out=tfplan
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Terraform Init & Plan') {
+            steps {
+                input "Plan Terraform changes?" // Manual approval (optional)
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh '''
+                    echo "Initializing Terraform..."
+                    cd terraform
+                    terraform init
+                    terraform plan -out=tfplan
+                    '''
+                }
+            }
+        }
 
-        // stage('Terraform Apply') {
-        //     steps {
-        //         input "Apply Terraform changes?" // Manual approval (optional)
-        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //             sh '''
-        //             echo "Applying Terraform changes..."
-        //             cd terraform
-        //             terraform apply -auto-approve tfplan
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Terraform Apply') {
+            steps {
+                input "Apply Terraform changes?" // Manual approval (optional)
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        echo "Applying Terraform changes..."
+                        dir(TERRAFORM_DIR) {
+                            // Apply Terraform plan and save output
+                            sh 'terraform apply -auto-approve tfplan'
+                            
+                            // Capture the output IP address and save it as a Jenkins environment variable
+                            def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
+                            
+                            // Save the IP address to a Jenkins environment variable
+                            env.PUBLIC_IP = ip
+                            echo "Public IP: ${env.PUBLIC_IP}"
+                        }
+                    }
+                }
+            }
+        }
 
 
         stage('Deploy App') {
