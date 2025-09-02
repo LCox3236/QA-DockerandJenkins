@@ -62,9 +62,13 @@ pipeline {
                     # Deploy the application
                     scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@${APP_VM}:/var/www/calculator
 
-                    # Install Node.js and npm if they are missing
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "which npm || (sudo apt update && sudo apt install -y nodejs npm)"
-
+                    # Install Node.js and npm if they are missing (and fix Kubernetes repo issue)
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "
+                    sudo rm -f /etc/apt/sources.list.d/kubernetes.list
+                    sudo apt update
+                    sudo apt install -y nodejs npm
+                    "
+                    
                     # Restart nginx to apply changes
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo systemctl restart nginx"
 
