@@ -82,9 +82,6 @@ pipeline {
             }
         }
                 
-            
-
-
         stage('Deploy App') {
             steps {
                 sshagent(credentials: ['azuressh']) {
