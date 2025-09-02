@@ -115,18 +115,23 @@ resource "azurerm_public_ip" "public_ip" {
   name                       = "rs-lewisc-vm-tf-ip"
   location                   = var.rg_location
   resource_group_name        = var.rg_name
-  allocation_method          = "Static"  # Set allocation method to Static
-  sku                         = "Standard"  # Use Standard SKU for public IP
+  allocation_method          = "Static"  # Static IP
+  sku                         = "Standard"  # Standard SKU for public IP
   idle_timeout_in_minutes    = 4           # Optional: set idle timeout (default is 4)
-  
-  tags = {
-    environment = "production"
+
+  # Ensure this IP does not change between destroy and apply
+  lifecycle {
+    prevent_destroy = true  # Prevent the public IP from being destroyed
   }
 }
 
+# Lifecycle configuration to prevent destruction of critical resources
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
+  lifecycle {
+    prevent_destroy = true  # Prevent NIC from being destroyed
+  }
 }
 
 # Virtual Machine
@@ -143,16 +148,17 @@ resource "azurerm_linux_virtual_machine" "vm" {
     storage_account_type = "Standard_LRS"
     name                 = "osdisk-rs-lewisc-vm"
   }
-   source_image_reference {
+
+  source_image_reference {
     publisher = "Canonical"
-    offer     = "ubuntu-24_04-lts"  # Updated offer name
-    sku       = "server"             # The plan (SKU)
-    version   = "latest"             # Use 'latest' for Ubuntu 24.04 LTS
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
+    version   = "latest"
   }
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~/.ssh/id_rsa.pub")  # Update path to your SSH public key
+    public_key = file("~/.ssh/id_rsa.pub")
   }
 
   disable_password_authentication = true
