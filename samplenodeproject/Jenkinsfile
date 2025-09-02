@@ -32,10 +32,10 @@ pipeline {
                     script {
                         // Use Azure credentials securely from Jenkins
                         withCredentials([
-                            string(credentialsId: 'client-id', variable: 'AZURE_CLIENT_ID'),
-                            string(credentialsId: 'client-secret', variable: 'AZURE_CLIENT_SECRET'),
-                            string(credentialsId: 'tenant-id', variable: 'AZURE_TENANT_ID'),
-                            string(credentialsId: 'subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                            string(credentialsId: 'client_id', variable: 'AZURE_CLIENT_ID'),
+                            string(credentialsId: 'client_secret', variable: 'AZURE_CLIENT_SECRET'),
+                            string(credentialsId: 'tenant_id', variable: 'AZURE_TENANT_ID'),
+                            string(credentialsId: 'subscription_id', variable: 'AZURE_SUBSCRIPTION_ID')
                         ]) {
                             echo "Initializing Terraform..."
                             // Set Azure authentication environment variables for Terraform
@@ -65,10 +65,10 @@ pipeline {
                         echo "Applying Terraform changes..."
                         // Use Azure credentials securely from Jenkins
                         withCredentials([
-                            string(credentialsId: 'client-id', variable: 'AZURE_CLIENT_ID'),
-                            string(credentialsId: 'client-secret', variable: 'AZURE_CLIENT_SECRET'),
-                            string(credentialsId: 'tenant-id', variable: 'AZURE_TENANT_ID'),
-                            string(credentialsId: 'subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                            string(credentialsId: 'client_id', variable: 'AZURE_CLIENT_ID'),
+                            string(credentialsId: 'client_secret', variable: 'AZURE_CLIENT_SECRET'),
+                            string(credentialsId: 'tenant_id', variable: 'AZURE_TENANT_ID'),
+                            string(credentialsId: 'subscription_id', variable: 'AZURE_SUBSCRIPTION_ID')
                         ]) {
                             // Set Azure authentication environment variables for Terraform
                             withEnv([
