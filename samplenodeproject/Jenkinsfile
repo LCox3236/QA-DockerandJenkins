@@ -27,35 +27,32 @@ pipeline {
 
         stage('Terraform Init & Plan') {
             steps {
-                input "Plan Terraform changes?" // Manual approval (optional)
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    script {
-                        // Use Azure credentials securely from Jenkins
-                        withCredentials([
-                            string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
-                            string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
-                            string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID'),
-                            string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                script {
+                    // Use Azure credentials securely from Jenkins
+                    withCredentials([
+                        string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
+                        string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                        string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID'),
+                        string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                    ]) {
+                        echo "Initializing Terraform..."
+                        // Set Azure authentication environment variables for Terraform
+                        withEnv([
+                            "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
+                            "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
+                            "ARM_TENANT_ID=${AZURE_TENANT_ID}",
+                            "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
                         ]) {
-                            echo "Initializing Terraform..."
-                            // Set Azure authentication environment variables for Terraform
-                            withEnv([
-                                "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
-                                "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
-                                "ARM_TENANT_ID=${AZURE_TENANT_ID}",
-                                "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
-                            ]) {
-                                // Run Terraform commands with -var flags to pass the credentials
-                                dir(TERRAFORM_DIR) {
-                                    sh "terraform init"
-                                    sh """
-                                        terraform plan -out=tfplan \
-                                        -var client_id=${AZURE_CLIENT_ID} \
-                                        -var client_secret=${AZURE_CLIENT_SECRET} \
-                                        -var tenant_id=${AZURE_TENANT_ID} \
-                                        -var subscription_id=${AZURE_SUBSCRIPTION_ID}
-                                    """
-                                }
+                            // Run Terraform commands with -var flags to pass the credentials
+                            dir(TERRAFORM_DIR) {
+                                sh "terraform init"
+                                sh """
+                                    terraform plan -out=tfplan \
+                                    -var client_id=${AZURE_CLIENT_ID} \
+                                    -var client_secret=${AZURE_CLIENT_SECRET} \
+                                    -var tenant_id=${AZURE_TENANT_ID} \
+                                    -var subscription_id=${AZURE_SUBSCRIPTION_ID}
+                                """
                             }
                         }
                     }
@@ -65,23 +62,20 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                input "Apply Terraform changes?" // Manual approval (optional)
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    script {
-                        echo "Applying Terraform changes..."
-                        dir(TERRAFORM_DIR) {
-                            sh "terraform apply -auto-approve tfplan"
+                script {
+                    echo "Applying Terraform changes..."
+                    dir(TERRAFORM_DIR) {
+                        sh "terraform apply -auto-approve tfplan"
 
-                            // Capture the output IP address and save it as a Jenkins environment variable
-                            def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
+                        // Capture the output IP address and save it as a Jenkins environment variable
+                        def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
 
-                            // Check if IP was captured
-                            if (ip) {
-                                env.PUBLIC_IP = ip
-                                echo "Public IP: ${env.PUBLIC_IP}"
-                            } else {
-                                error "Terraform output 'public_ip' not found."
-                            }
+                        // Check if IP was captured
+                        if (ip) {
+                            env.PUBLIC_IP = ip
+                            echo "Public IP: ${env.PUBLIC_IP}"
+                        } else {
+                            error "Terraform output 'public_ip' not found."
                         }
                     }
                 }
@@ -95,6 +89,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['azuressh']) {
                     sh '''
+                    echo "Deploy stage Public IP: ${env.PUBLIC_IP}"
                     # Ensure the target directory exists on the remote server
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
 
