@@ -56,10 +56,20 @@ pipeline {
             steps {
                 sshagent(credentials: ['azuressh']) {
                     sh '''
+                    # Ensure the target directory exists on the remote server
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
-                    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@${APP_VM}:/var/www/calculator
+
+                    # Deploy the application
+                    scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject azureuser@${APP_VM}:/var/www/calculator
+
+                    # Install Node.js and npm if they are missing
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "which npm || (sudo apt update && sudo apt install -y nodejs npm)"
+
+                    # Restart nginx to apply changes
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo systemctl restart nginx"
-                    ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "cd /var/www/calculator && npm start"
+
+                    # Start the Node.js app (using pm2 or npm)
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "cd /var/www/calculator && npm install && pm2 start app.js --name 'calculator' || npm start"
                     '''
                 }
             }
