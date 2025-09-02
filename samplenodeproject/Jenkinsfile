@@ -102,7 +102,7 @@ pipeline {
 
                     # Start the Node.js app in the background using nohup
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
-                    cd /var/www/calculator && npm install && nohup npm start &"
+                    cd /var/www/calculator && npm install && nohup npm start &> /dev/null 2>&1 & disown
                     
                     # Restart nginx to apply changes
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo systemctl restart nginx"
