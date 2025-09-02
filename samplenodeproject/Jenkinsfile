@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        APP_VM = "51.145.115.179"
+        APP_VM = '51.145.115.179'
+        TERRAFORM_DIR = 'samplenodeproject/terraform' 
     }
 
     stages {
@@ -28,13 +29,30 @@ pipeline {
             steps {
                 input "Plan Terraform changes?" // Manual approval (optional)
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh '''
-                    echo "Initializing Terraform..."
-                    pwd
-                    cd samplenodeproject/terraform
-                    terraform init
-                    terraform plan -out=tfplan
-                    '''
+                    script {
+                        // Use Azure credentials securely from Jenkins
+                        withCredentials([
+                            string(credentialsId: 'client-id', variable: 'AZURE_CLIENT_ID'),
+                            string(credentialsId: 'client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                            string(credentialsId: 'tenant-id', variable: 'AZURE_TENANT_ID'),
+                            string(credentialsId: 'subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                        ]) {
+                            echo "Initializing Terraform..."
+                            // Set Azure authentication environment variables for Terraform
+                            withEnv([
+                                "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
+                                "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
+                                "ARM_TENANT_ID=${AZURE_TENANT_ID}",
+                                "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
+                            ]) {
+                                // Run Terraform commands
+                                dir(TERRAFORM_DIR) {
+                                    sh 'terraform init'
+                                    sh 'terraform plan -out=tfplan'
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -45,16 +63,36 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     script {
                         echo "Applying Terraform changes..."
-                        dir(TERRAFORM_DIR) {
-                            // Apply Terraform plan and save output
-                            sh 'terraform apply -auto-approve tfplan'
-                            
-                            // Capture the output IP address and save it as a Jenkins environment variable
-                            def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
-                            
-                            // Save the IP address to a Jenkins environment variable
-                            env.PUBLIC_IP = ip
-                            echo "Public IP: ${env.PUBLIC_IP}"
+                        // Use Azure credentials securely from Jenkins
+                        withCredentials([
+                            string(credentialsId: 'client-id', variable: 'AZURE_CLIENT_ID'),
+                            string(credentialsId: 'client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                            string(credentialsId: 'tenant-id', variable: 'AZURE_TENANT_ID'),
+                            string(credentialsId: 'subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+                        ]) {
+                            // Set Azure authentication environment variables for Terraform
+                            withEnv([
+                                "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
+                                "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
+                                "ARM_TENANT_ID=${AZURE_TENANT_ID}",
+                                "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
+                            ]) {
+                                dir(TERRAFORM_DIR) {
+                                    // Apply Terraform plan and save output
+                                    sh 'terraform apply -auto-approve tfplan'
+                                    
+                                    // Capture the output IP address and save it as a Jenkins environment variable
+                                    def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
+
+                                    // Check if IP was captured
+                                    if (ip) {
+                                        env.PUBLIC_IP = ip
+                                        echo "Public IP: ${env.PUBLIC_IP}"
+                                    } else {
+                                        error "Terraform output 'public_ip' not found."
+                                    }
+                                }
+                            }
                         }
                     }
                 }

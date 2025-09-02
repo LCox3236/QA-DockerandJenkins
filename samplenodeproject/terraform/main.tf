@@ -173,3 +173,7 @@ resource "azurerm_virtual_machine_extension" "custom_script" {
 data "template_file" "init_script" {
   template = file("init.sh")
 }
+
+output "public_ip" {
+  value = azurerm_public_ip.public_ip.ip_address
+}
