@@ -59,21 +59,22 @@ pipeline {
                     # Ensure the target directory exists on the remote server
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
 
-                    # Deploy the application
+                    # Deploy the application (copying the contents of samplenodeproject)
                     scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject/* azureuser@${APP_VM}:/var/www/calculator
 
-                    # Install Node.js and npm if they are missing (and fix Kubernetes repo issue)
+                    # Install Node.js and npm if they are missing
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "
                     sudo rm -f /etc/apt/sources.list.d/kubernetes.list
                     sudo apt update
                     sudo apt install -y nodejs npm
                     "
+
+                    # Start the Node.js app in the background using nohup
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "
+                    cd /var/www/calculator && npm install && nohup npm start &"
                     
                     # Restart nginx to apply changes
                     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo systemctl restart nginx"
-
-                    # Start the Node.js app (using pm2 or npm)
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "cd /var/www/calculator && npm install && pm2 start app.js --name 'calculator' || npm start"
                     '''
                 }
             }
