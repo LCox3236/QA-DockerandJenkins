@@ -7,24 +7,23 @@ provider "azurerm" {
 
 }
 
-# Resource Group
-resource "azurerm_resource_group" "rg" {
-  name     = "rg-lewisc-1"
-  location = "UK South"  # change as needed
-}
+# # Resource Group
+# resource "azurerm_resource_group" "rg" {
+#   name     = "rg-lewisc-1"
+#   location = "UK South"  # change as needed
+# }
 
 # Virtual Network
 resource "azurerm_virtual_network" "vnet" {
-  name                = "rs-lewisc-vm-vnet"
+  name                = "rs-lewisc-vm-tf-vnet"
   address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.rg_location
+  resource_group_name = var.rg_name
 }
-
 # Subnet
 resource "azurerm_subnet" "subnet" {
-  name                 = "subnet1"
-  resource_group_name  = azurerm_resource_group.rg.name
+  name                 = "subnet1-tf"
+  resource_group_name  = var.rg_name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.1.0/24"]
 }
@@ -32,8 +31,8 @@ resource "azurerm_subnet" "subnet" {
 # Network Security Group
 resource "azurerm_network_security_group" "nsg" {
   name                = "rs-lewisc-vm-tf-nsg"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.rg_location
+  resource_group_name = var.rg_name
 }
 
 # NSG Rule (Allow SSH)
@@ -47,7 +46,7 @@ resource "azurerm_network_security_rule" "ssh" {
   destination_port_range      = "22"
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = var.rg_name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
@@ -62,7 +61,7 @@ resource "azurerm_network_security_rule" "jenkins" {
   destination_port_range      = "8080"
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = var.rg_name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
@@ -77,7 +76,7 @@ resource "azurerm_network_security_rule" "http" {
   destination_port_range      = "80"
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = var.rg_name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
@@ -92,15 +91,15 @@ resource "azurerm_network_security_rule" "app" {
   destination_port_range      = "5000"
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = var.rg_name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
 
 # Network Interface
 resource "azurerm_network_interface" "nic" {
   name                = "rs-lewisc-vm897-tf"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.rg_location
+  resource_group_name = var.rg_name
 
   ip_configuration {
     name                          = "internal"
@@ -114,8 +113,8 @@ resource "azurerm_network_interface" "nic" {
 
 resource "azurerm_public_ip" "public_ip" {
   name                       = "rs-lewisc-vm-tf-ip"
-  location                   = azurerm_resource_group.rg.location
-  resource_group_name        = azurerm_resource_group.rg.name
+  location                   = var.rg_location
+  resource_group_name        = var.rg_name
   allocation_method          = "Static"  # Set allocation method to Static
   sku                         = "Standard"  # Use Standard SKU for public IP
   idle_timeout_in_minutes    = 4           # Optional: set idle timeout (default is 4)
@@ -133,8 +132,8 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
 # Virtual Machine
 resource "azurerm_linux_virtual_machine" "vm" {
   name                  = "rs-lewisc-tf-vm"
-  resource_group_name   = azurerm_resource_group.rg.name
-  location              = azurerm_resource_group.rg.location
+  resource_group_name   = var.rg_name
+  location              = var.rg_location
   size                  = "Standard_B1s"
   admin_username        = "azureuser"
   network_interface_ids = [azurerm_network_interface.nic.id]

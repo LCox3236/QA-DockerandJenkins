@@ -10,3 +10,12 @@ variable "tenant_id" {
 variable "subscription_id" {
   description = "The subscription ID for the application"
 }
+variable "rg_name" {
+  description = "The name of the resource group"
+  default     = "rg-lewisc-1"
+}
+variable "rg_location" {
+  description = "The Azure region to deploy resources in"
+  default     = "UK South"
+  
+}

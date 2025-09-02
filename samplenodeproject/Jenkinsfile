@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APP_VM = "azureuser@51.142.192.35"
+        APP_VM = "azureuser@51.145.115.179"
     }
 
     stages {
