@@ -96,24 +96,24 @@ pipeline {
                 sshagent(credentials: ['azuressh']) {
                     sh '''
                     # Ensure the target directory exists on the remote server
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
 
                     # Deploy the application (copying the contents of samplenodeproject)
-                    scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject/* azureuser@${APP_VM}:/var/www/calculator
+                    scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject/* azureuser@${env.PUBLIC_IP}:/var/www/calculator
 
                     # Install Node.js and npm if they are missing
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
                     sudo rm -f /etc/apt/sources.list.d/kubernetes.list
                     sudo apt update
                     sudo apt install -y nodejs npm
                     "
 
                     # Start the Node.js app in the background using nohup
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
                     cd /var/www/calculator && npm install && nohup npm start &"
                     
                     # Restart nginx to apply changes
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${APP_VM} "sudo systemctl restart nginx"
+                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo systemctl restart nginx"
                     '''
                 }
             }
