@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        APP_VM = '51.145.115.179'
         TERRAFORM_DIR = 'samplenodeproject/terraform' 
     }
 
@@ -25,102 +24,102 @@ pipeline {
             }
         }
 
-        stage('Terraform Init & Plan') {
-            steps {
-                script {
-                    // Use Azure credentials securely from Jenkins
-                    withCredentials([
-                        string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
-                        string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
-                        string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID'),
-                        string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
-                    ]) {
-                        echo "Initializing Terraform..."
-                        // Set Azure authentication environment variables for Terraform
-                        withEnv([
-                            "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
-                            "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
-                            "ARM_TENANT_ID=${AZURE_TENANT_ID}",
-                            "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
-                        ]) {
-                            // Run Terraform commands with -var flags to pass the credentials
-                            dir(TERRAFORM_DIR) {
-                                sh "terraform init"
-                                sh """
-                                    terraform plan -out=tfplan \
-                                    -var client_id=${AZURE_CLIENT_ID} \
-                                    -var client_secret=${AZURE_CLIENT_SECRET} \
-                                    -var tenant_id=${AZURE_TENANT_ID} \
-                                    -var subscription_id=${AZURE_SUBSCRIPTION_ID}
-                                """
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Terraform Init & Plan') {
+        //     steps {
+        //         script {
+        //             // Use Azure credentials securely from Jenkins
+        //             withCredentials([
+        //                 string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
+        //                 string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
+        //                 string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID'),
+        //                 string(credentialsId: 'azure-subscription-id', variable: 'AZURE_SUBSCRIPTION_ID')
+        //             ]) {
+        //                 echo "Initializing Terraform..."
+        //                 // Set Azure authentication environment variables for Terraform
+        //                 withEnv([
+        //                     "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
+        //                     "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
+        //                     "ARM_TENANT_ID=${AZURE_TENANT_ID}",
+        //                     "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
+        //                 ]) {
+        //                     // Run Terraform commands with -var flags to pass the credentials
+        //                     dir(TERRAFORM_DIR) {
+        //                         sh "terraform init"
+        //                         sh """
+        //                             terraform plan -out=tfplan \
+        //                             -var client_id=${AZURE_CLIENT_ID} \
+        //                             -var client_secret=${AZURE_CLIENT_SECRET} \
+        //                             -var tenant_id=${AZURE_TENANT_ID} \
+        //                             -var subscription_id=${AZURE_SUBSCRIPTION_ID}
+        //                         """
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Terraform Apply') {
-            steps {
-                script {
-                    echo "Applying Terraform changes..."
-                    dir(TERRAFORM_DIR) {
-                        sh "terraform apply -auto-approve tfplan"
+        // stage('Terraform Apply') {
+        //     steps {
+        //         script {
+        //             echo "Applying Terraform changes..."
+        //             dir(TERRAFORM_DIR) {
+        //                 sh "terraform apply -auto-approve tfplan"
 
-                        // Capture the output IP address and save it as a Jenkins environment variable
-                        def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
+        //                 // Capture the output IP address and save it as a Jenkins environment variable
+        //                 def ip = sh(script: 'terraform output -raw public_ip', returnStdout: true).trim()
 
-                        // Check if IP was captured
-                        if (ip) {
-                            env.PUBLIC_IP = ip
-                            echo "Public IP: ${env.PUBLIC_IP}"
-                        } else {
-                            error "Terraform output 'public_ip' not found."
-                        }
-                    }
-                }
-            }
-        }
+        //                 // Check if IP was captured
+        //                 if (ip) {
+        //                     env.PUBLIC_IP = ip
+        //                     echo "Public IP: ${env.PUBLIC_IP}"
+        //                 } else {
+        //                     error "Terraform output 'public_ip' not found."
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
                 
-        stage('Deploy App') {
-            steps {
-                sshagent(credentials: ['azuressh']) {
-                    sh """
-                    echo "Deploy stage Public IP: ${env.PUBLIC_IP}"
-                    # Ensure the target directory exists on the remote server
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
+        // stage('Deploy App') {
+        //     steps {
+        //         sshagent(credentials: ['azuressh']) {
+        //             sh """
+        //             echo "Deploy stage Public IP: ${env.PUBLIC_IP}"
+        //             # Ensure the target directory exists on the remote server
+        //             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo mkdir -p /var/www/calculator && sudo chown azureuser:azureuser /var/www/calculator"
 
-                    # Deploy the application (copying the contents of samplenodeproject)
-                    scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject/* azureuser@${env.PUBLIC_IP}:/var/www/calculator
+        //             # Deploy the application (copying the contents of samplenodeproject)
+        //             scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ./samplenodeproject/* azureuser@${env.PUBLIC_IP}:/var/www/calculator
 
-                    # Install Node.js and npm if they are missing
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
-                    sudo rm -f /etc/apt/sources.list.d/kubernetes.list
-                    sudo apt update
-                    sudo apt install -y nodejs npm
-                    "
+        //             # Install Node.js and npm if they are missing
+        //             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
+        //             sudo rm -f /etc/apt/sources.list.d/kubernetes.list
+        //             sudo apt update
+        //             sudo apt install -y nodejs npm
+        //             "
 
-                    # Start the Node.js app in the background using nohup and disown it
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
-                    cd /var/www/calculator && npm install && nohup npm start &> /dev/null 2>&1 & disown
-                    "
+        //             # Start the Node.js app in the background using nohup and disown it
+        //             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "
+        //             cd /var/www/calculator && npm install && nohup npm start &> /dev/null 2>&1 & disown
+        //             "
                     
-                    # Restart nginx to apply changes
-                    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo systemctl restart nginx"
-                    """
-                }
-            }
-        }
+        //             # Restart nginx to apply changes
+        //             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null azureuser@${env.PUBLIC_IP} "sudo systemctl restart nginx"
+        //             """
+        //         }
+        //     }
+        // }
 
 
-        stage('Verify Deployment') {
-            steps {
-                sh """
-                echo "Verifying deployment..."
-                curl -f http://${env.PUBLIC_IP}:80 || exit 1
-                """
-            }
-        }
+        // stage('Verify Deployment') {
+        //     steps {
+        //         sh """
+        //         echo "Verifying deployment..."
+        //         curl -f http://${env.PUBLIC_IP}:80 || exit 1
+        //         """
+        //     }
+        // }
     }
 
     post {
